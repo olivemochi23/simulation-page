@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>民泊申請・消防工事 費用シミュレーション</title>
+    <link rel="icon" href="/favicon.ico">
     <style>
         :root {
             --primary: #4a6da7;
@@ -1180,184 +1181,231 @@
     </div>
 
     <script>
+        // クライアントサイドでの実行を確認する
+        const isClient = typeof window !== 'undefined';
+        
         // タブ切り替え機能
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const tabId = this.dataset.tab;
+        if (isClient) {
+            document.addEventListener('DOMContentLoaded', function() {
+                // 要素が存在するかチェックする関数
+                function elementExists(id) {
+                    return document.getElementById(id) !== null;
+                }
+                
+                const tabs = document.querySelectorAll('.tab');
+                const tabContents = document.querySelectorAll('.tab-content');
+                
+                if (tabs.length > 0 && tabContents.length > 0) {
+                    tabs.forEach(tab => {
+                        tab.addEventListener('click', function() {
+                            const tabId = this.dataset.tab;
+                            
+                            // 全てのタブとコンテンツからアクティブクラスを削除
+                            tabs.forEach(t => t.classList.remove('active'));
+                            tabContents.forEach(content => content.classList.remove('active'));
+                            
+                            // クリックされたタブとそれに対応するコンテンツにアクティブクラスを追加
+                            this.classList.add('active');
+                            const tabContent = document.getElementById(tabId + '-tab');
+                            if (tabContent) {
+                                tabContent.classList.add('active');
+                            }
+                        });
+                    });
+                }
+                
+                // 申請種別の選択に応じて表示オプションを変更
+                const minpakuRadio = elementExists('minpaku') ? document.getElementById('minpaku') : null;
+                const ryokanRadio = elementExists('ryokan') ? document.getElementById('ryokan') : null;
+                const tokkuRadio = elementExists('tokku') ? document.getElementById('tokku') : null;
+                const minpakuOptions = document.querySelectorAll('.minpaku-option');
+                const ryokanOptions = document.querySelectorAll('.ryokan-option');
+                
+                function updateOptionVisibility() {
+                    if (!minpakuRadio || !ryokanRadio) return;
                     
-                    // 全てのタブとコンテンツからアクティブクラスを削除
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
+                    if (minpakuRadio.checked) {
+                        minpakuOptions.forEach(option => option.style.display = 'table-row');
+                        ryokanOptions.forEach(option => option.style.display = 'none');
+                    } else if (ryokanRadio.checked) {
+                        minpakuOptions.forEach(option => option.style.display = 'none');
+                        ryokanOptions.forEach(option => option.style.display = 'table-row');
+                    } else {
+                        minpakuOptions.forEach(option => option.style.display = 'none');
+                        ryokanOptions.forEach(option => option.style.display = 'none');
+                    }
+                }
+                
+                if (minpakuRadio && ryokanRadio && tokkuRadio) {
+                    minpakuRadio.addEventListener('change', updateOptionVisibility);
+                    ryokanRadio.addEventListener('change', updateOptionVisibility);
+                    tokkuRadio.addEventListener('change', updateOptionVisibility);
                     
-                    // クリックされたタブとそれに対応するコンテンツにアクティブクラスを追加
-                    this.classList.add('active');
-                    document.getElementById(tabId + '-tab').classList.add('active');
-                });
+                    // 初期表示設定
+                    updateOptionVisibility();
+                }
+                
+                // 料金計算機能
+                const option1Checkbox = elementExists('option1') ? document.getElementById('option1') : null;
+                const option2Checkbox = elementExists('option2') ? document.getElementById('option2') : null;
+                const option3Checkbox = elementExists('option3') ? document.getElementById('option3') : null;
+                const option4Checkbox = elementExists('option4') ? document.getElementById('option4') : null;
+                const applicationTotal = elementExists('application-total') ? document.getElementById('application-total') : null;
+                const fireSafetyTotal = elementExists('fire-safety-total') ? document.getElementById('fire-safety-total') : null;
+                const fixedApplicationTotal = elementExists('fixed-application-total') ? document.getElementById('fixed-application-total') : null;
+                const fixedFireSafetyTotal = elementExists('fixed-fire-safety-total') ? document.getElementById('fixed-fire-safety-total') : null;
+                
+                // 消防設備のチェックボックス
+                const fireOption1 = elementExists('fire-option1') ? document.getElementById('fire-option1') : null;
+                const fireOption2 = elementExists('fire-option2') ? document.getElementById('fire-option2') : null;
+                const fireOption3 = elementExists('fire-option3') ? document.getElementById('fire-option3') : null;
+                const fireOption4 = elementExists('fire-option4') ? document.getElementById('fire-option4') : null;
+                const fireOption5 = elementExists('fire-option5') ? document.getElementById('fire-option5') : null;
+                const fireOption6 = elementExists('fire-option6') ? document.getElementById('fire-option6') : null;
+                const fireEquipment1 = elementExists('fire-equipment1') ? document.getElementById('fire-equipment1') : null;
+                const fireEquipment2 = elementExists('fire-equipment2') ? document.getElementById('fire-equipment2') : null;
+                const fireEquipment3 = elementExists('fire-equipment3') ? document.getElementById('fire-equipment3') : null;
+                const fireEquipment4 = elementExists('fire-equipment4') ? document.getElementById('fire-equipment4') : null;
+                const fireEquipment5 = elementExists('fire-equipment5') ? document.getElementById('fire-equipment5') : null;
+                const fireEquipment6 = elementExists('fire-equipment6') ? document.getElementById('fire-equipment6') : null;
+                
+                // 自動推奨機能
+                function updateFireRecommendations() {
+                    if (!fireOption1 || !fireOption2 || !fireEquipment1 || !fireEquipment3 || !fireEquipment4) return;
+                    
+                    // 2階建て以上と100㎡以上の場合は自動火災報知設備が必要
+                    if (fireOption1.checked && fireOption2.checked) {
+                        fireEquipment1.checked = true;
+                    }
+                    
+                    // 2階建て以上なら誘導灯が必要
+                    if (fireOption1.checked) {
+                        fireEquipment4.checked = true;
+                    }
+                    
+                    // 基本的に消火器は必要
+                    fireEquipment3.checked = true;
+                    
+                    calculateFireTotal(); // 自動推奨後に再計算
+                }
+                
+                // 申請費用計算（単一の統合関数）
+                function calculateTotal() {
+                    if (!minpakuRadio || !ryokanRadio || !tokkuRadio || 
+                        !option1Checkbox || !option2Checkbox || !option3Checkbox || !option4Checkbox ||
+                        !applicationTotal || !fixedApplicationTotal) return;
+                    
+                    let total = 0;
+                    
+                    // 基本料金
+                    if (minpakuRadio.checked) total += 160000;
+                    if (ryokanRadio.checked) total += 200000;
+                    if (tokkuRadio.checked) total += 200000;
+                    
+                    // オプション料金
+                    if (option1Checkbox.checked) total += 30000;
+                    if (option2Checkbox.checked) total += 30000;
+                    if (option3Checkbox.checked) total += 30000;
+                    if (option4Checkbox.checked) total += 10000;
+                    
+                    // 金額表示を一貫した形式で更新（固定表示と通常表示の両方）
+                    const formattedTotal = '¥' + total.toLocaleString();
+                    applicationTotal.textContent = formattedTotal;
+                    fixedApplicationTotal.textContent = formattedTotal;
+                }
+                
+                // 消防設備費用計算（単一の統合関数）
+                function calculateFireTotal() {
+                    if (!fireEquipment1 || !fireEquipment2 || !fireEquipment3 || !fireEquipment4 || !fireEquipment5 || !fireEquipment6 ||
+                        !fireOption3 || !fireOption4 || !fireOption5 || !fireOption6 ||
+                        !fireSafetyTotal || !fixedFireSafetyTotal) return;
+                    
+                    let total = 0;
+                    
+                    // 設備費用
+                    if (fireEquipment1.checked) total += 120000;
+                    if (fireEquipment2.checked) total += 45000;
+                    if (fireEquipment3.checked) total += 8000;
+                    if (fireEquipment4.checked) total += 15000;
+                    if (fireEquipment5.checked) total += 18000;
+                    if (fireEquipment6.checked) total += 12000;
+                    
+                    // 工事オプション
+                    if (fireOption3.checked) total += 35000;
+                    if (fireOption4.checked) total += 8000;
+                    if (fireOption5.checked) total += 25000;
+                    if (fireOption6.checked) total += 30000;
+                    
+                    // 金額表示を一貫した形式で更新（固定表示と通常表示の両方）
+                    const formattedTotal = '¥' + total.toLocaleString();
+                    fireSafetyTotal.textContent = formattedTotal;
+                    fixedFireSafetyTotal.textContent = formattedTotal;
+                }
+                
+                // イベントリスナー設定
+                function setupEventListeners() {
+                    if (minpakuRadio && ryokanRadio && tokkuRadio) {
+                        minpakuRadio.addEventListener('change', calculateTotal);
+                        ryokanRadio.addEventListener('change', calculateTotal);
+                        tokkuRadio.addEventListener('change', calculateTotal);
+                    }
+                    
+                    if (option1Checkbox && option2Checkbox && option3Checkbox && option4Checkbox) {
+                        option1Checkbox.addEventListener('change', calculateTotal);
+                        option2Checkbox.addEventListener('change', calculateTotal);
+                        option3Checkbox.addEventListener('change', calculateTotal);
+                        option4Checkbox.addEventListener('change', calculateTotal);
+                    }
+                    
+                    if (fireOption1 && fireOption2 && fireOption3 && fireOption4 && fireOption5 && fireOption6) {
+                        fireOption1.addEventListener('change', updateFireRecommendations);
+                        fireOption2.addEventListener('change', updateFireRecommendations);
+                        fireOption3.addEventListener('change', calculateFireTotal);
+                        fireOption4.addEventListener('change', calculateFireTotal);
+                        fireOption5.addEventListener('change', calculateFireTotal);
+                        fireOption6.addEventListener('change', calculateFireTotal);
+                    }
+                    
+                    if (fireEquipment1 && fireEquipment2 && fireEquipment3 && fireEquipment4 && fireEquipment5 && fireEquipment6) {
+                        fireEquipment1.addEventListener('change', calculateFireTotal);
+                        fireEquipment2.addEventListener('change', calculateFireTotal);
+                        fireEquipment3.addEventListener('change', calculateFireTotal);
+                        fireEquipment4.addEventListener('change', calculateFireTotal);
+                        fireEquipment5.addEventListener('change', calculateFireTotal);
+                        fireEquipment6.addEventListener('change', calculateFireTotal);
+                    }
+                    
+                    // CTAボタンのアニメーション
+                    const ctaButton = elementExists('estimate-request') ? document.getElementById('estimate-request') : null;
+                    if (ctaButton) {
+                        ctaButton.addEventListener('click', function() {
+                            alert('お見積り依頼フォームへ進みます。実際の実装ではフォームページに遷移します。');
+                        });
+                    }
+                }
+                
+                // 初期化処理
+                setupEventListeners();
+                
+                // 初期計算して表示を設定
+                calculateTotal();
+                updateFireRecommendations(); // この中でcalculateFireTotal()も呼ばれる
+                
+                // スクロール処理
+                const fixedHeader = document.querySelector('.fixed-cost-header');
+                if (fixedHeader) {
+                    window.addEventListener('scroll', function() {
+                        if (window.scrollY > 200) {
+                            fixedHeader.style.transform = 'translateY(0)';
+                        } else {
+                            fixedHeader.style.transform = 'translateY(100%)';
+                        }
+                    });
+                    
+                    // 初期表示では非表示にしておく
+                    fixedHeader.style.transform = 'translateY(100%)';
+                }
             });
-            
-            // 申請種別の選択に応じて表示オプションを変更
-            const minpakuRadio = document.getElementById('minpaku');
-            const ryokanRadio = document.getElementById('ryokan');
-            const tokkuRadio = document.getElementById('tokku');
-            const minpakuOptions = document.querySelectorAll('.minpaku-option');
-            const ryokanOptions = document.querySelectorAll('.ryokan-option');
-            
-            function updateOptionVisibility() {
-                if (minpakuRadio.checked) {
-                    minpakuOptions.forEach(option => option.style.display = 'table-row');
-                    ryokanOptions.forEach(option => option.style.display = 'none');
-                } else if (ryokanRadio.checked) {
-                    minpakuOptions.forEach(option => option.style.display = 'none');
-                    ryokanOptions.forEach(option => option.style.display = 'table-row');
-                } else {
-                    minpakuOptions.forEach(option => option.style.display = 'none');
-                    ryokanOptions.forEach(option => option.style.display = 'none');
-                }
-            }
-            
-            minpakuRadio.addEventListener('change', updateOptionVisibility);
-            ryokanRadio.addEventListener('change', updateOptionVisibility);
-            tokkuRadio.addEventListener('change', updateOptionVisibility);
-            
-            // 初期表示設定
-            updateOptionVisibility();
-            
-            // 料金計算機能
-            const option1Checkbox = document.getElementById('option1');
-            const option2Checkbox = document.getElementById('option2');
-            const option3Checkbox = document.getElementById('option3');
-            const option4Checkbox = document.getElementById('option4');
-            const applicationTotal = document.getElementById('application-total');
-            const fireSafetyTotal = document.getElementById('fire-safety-total');
-            const fixedApplicationTotal = document.getElementById('fixed-application-total');
-            const fixedFireSafetyTotal = document.getElementById('fixed-fire-safety-total');
-            
-            // 消防設備のチェックボックス
-            const fireOption1 = document.getElementById('fire-option1');
-            const fireOption2 = document.getElementById('fire-option2');
-            const fireOption3 = document.getElementById('fire-option3');
-            const fireOption4 = document.getElementById('fire-option4');
-            const fireOption5 = document.getElementById('fire-option5');
-            const fireOption6 = document.getElementById('fire-option6');
-            const fireEquipment1 = document.getElementById('fire-equipment1');
-            const fireEquipment2 = document.getElementById('fire-equipment2');
-            const fireEquipment3 = document.getElementById('fire-equipment3');
-            const fireEquipment4 = document.getElementById('fire-equipment4');
-            const fireEquipment5 = document.getElementById('fire-equipment5');
-            const fireEquipment6 = document.getElementById('fire-equipment6');
-            
-            // 自動推奨機能
-            function updateFireRecommendations() {
-                // 2階建て以上と100㎡以上の場合は自動火災報知設備が必要
-                if (fireOption1.checked && fireOption2.checked) {
-                    fireEquipment1.checked = true;
-                }
-                
-                // 2階建て以上なら誘導灯が必要
-                if (fireOption1.checked) {
-                    fireEquipment4.checked = true;
-                }
-                
-                // 基本的に消火器は必要
-                fireEquipment3.checked = true;
-                
-                calculateFireTotal(); // 自動推奨後に再計算
-            }
-            
-            // 申請費用計算（単一の統合関数）
-            function calculateTotal() {
-                let total = 0;
-                
-                // 基本料金
-                if (minpakuRadio.checked) total += 160000;
-                if (ryokanRadio.checked) total += 200000;
-                if (tokkuRadio.checked) total += 200000;
-                
-                // オプション料金
-                if (option1Checkbox.checked) total += 30000;
-                if (option2Checkbox.checked) total += 30000;
-                if (option3Checkbox.checked) total += 30000;
-                if (option4Checkbox.checked) total += 10000;
-                
-                // 金額表示を一貫した形式で更新（固定表示と通常表示の両方）
-                const formattedTotal = '¥' + total.toLocaleString();
-                applicationTotal.textContent = formattedTotal;
-                fixedApplicationTotal.textContent = formattedTotal;
-            }
-            
-            // 消防設備費用計算（単一の統合関数）
-            function calculateFireTotal() {
-                let total = 0;
-                
-                // 設備費用
-                if (fireEquipment1.checked) total += 120000;
-                if (fireEquipment2.checked) total += 45000;
-                if (fireEquipment3.checked) total += 8000;
-                if (fireEquipment4.checked) total += 15000;
-                if (fireEquipment5.checked) total += 18000;
-                if (fireEquipment6.checked) total += 12000;
-                
-                // 工事オプション
-                if (fireOption3.checked) total += 35000;
-                if (fireOption4.checked) total += 8000;
-                if (fireOption5.checked) total += 25000;
-                if (fireOption6.checked) total += 30000;
-                
-                // 金額表示を一貫した形式で更新（固定表示と通常表示の両方）
-                const formattedTotal = '¥' + total.toLocaleString();
-                fireSafetyTotal.textContent = formattedTotal;
-                fixedFireSafetyTotal.textContent = formattedTotal;
-            }
-            
-            // イベントリスナー - 申請費用
-            minpakuRadio.addEventListener('change', calculateTotal);
-            ryokanRadio.addEventListener('change', calculateTotal);
-            tokkuRadio.addEventListener('change', calculateTotal);
-            option1Checkbox.addEventListener('change', calculateTotal);
-            option2Checkbox.addEventListener('change', calculateTotal);
-            option3Checkbox.addEventListener('change', calculateTotal);
-            option4Checkbox.addEventListener('change', calculateTotal);
-            
-            // イベントリスナー - 消防設備
-            fireOption1.addEventListener('change', updateFireRecommendations);
-            fireOption2.addEventListener('change', updateFireRecommendations);
-            fireOption3.addEventListener('change', calculateFireTotal);
-            fireOption4.addEventListener('change', calculateFireTotal);
-            fireOption5.addEventListener('change', calculateFireTotal);
-            fireOption6.addEventListener('change', calculateFireTotal);
-            fireEquipment1.addEventListener('change', calculateFireTotal);
-            fireEquipment2.addEventListener('change', calculateFireTotal);
-            fireEquipment3.addEventListener('change', calculateFireTotal);
-            fireEquipment4.addEventListener('change', calculateFireTotal);
-            fireEquipment5.addEventListener('change', calculateFireTotal);
-            fireEquipment6.addEventListener('change', calculateFireTotal);
-            
-            // 初期計算して表示を設定
-            calculateTotal();
-            updateFireRecommendations(); // この中でcalculateFireTotal()も呼ばれる
-            
-            // CTAボタンのアニメーション
-            const ctaButton = document.getElementById('estimate-request');
-            ctaButton.addEventListener('click', function() {
-                alert('お見積り依頼フォームへ進みます。実際の実装ではフォームページに遷移します。');
-            });
-
-            // スクロール処理
-            window.addEventListener('scroll', function() {
-                const header = document.querySelector('.fixed-cost-header');
-                if (window.scrollY > 200) {
-                    header.style.transform = 'translateY(0)';
-                } else {
-                    header.style.transform = 'translateY(100%)';
-                }
-            });
-
-            // 初期表示では非表示にしておく
-            document.querySelector('.fixed-cost-header').style.transform = 'translateY(100%)';
-        });
+        }
     </script>
 </body>
