@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>民泊申請・消防工事 費用シミュレーション</title>
+    <style>
+        :root {
+            --primary: #4a6da7;
+            --primary-light: #edf1f7;
+            --secondary: #1d9a6c;
+            --secondary-light: #e8f5f0;
+            --accent: #ff9800;
+            --dark: #333333;
+            --light: #ffffff;
+            --gray: #f5f5f5;
+            --border: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: var(--dark);
+            line-height: 1.6;
+            padding-bottom: 80px; /* 下部固定表示の余白 */
+            padding-top: 0; /* 上部余白不要 */
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 固定ヘッダーのスタイル */
+        .fixed-cost-header {
+            position: fixed;
+            bottom: 0; /* 上部から下部に変更 */
+            left: 0;
+            width: 100%;
+            background-color: var(--light);
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08); /* 影の方向を上向きに変更 */
+            z-index: 1000;
+            padding: 10px 0;
+            transition: transform 0.3s ease;
+        }
+        
+        .fixed-cost-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .fixed-cost-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 15px;
+            border-radius: var(--radius);
+        }
+        
+        .app-cost {
+            background-color: var(--primary-light);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .fire-cost {
+            background-color: var(--secondary-light);
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .fixed-cost-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .app-icon {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .fire-icon {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .fixed-cost-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .fixed-cost-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .fixed-cost-value {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .app-value {
+            color: var(--primary);
+        }
+        
+        .fire-value {
+            color: var(--secondary);
+        }
+        
+        header {
+            text-align: center;
+            margin: 20px 0 40px;
+        }
+        
+        h1 {
+            color: var(--primary);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        h1:after {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 3px;
+            background-color: var(--accent);
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .card {
+            background-color: var(--light);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            padding: 18px 24px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            background-color: var(--primary-light);
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-header-icon {
+            margin-right: 10px;
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 14px;
+        }
+        
+        .card-body {
+            padding: 20px 24px;
+        }
+        
+        .notice {
+            background-color: #fff8e1;
+            border-left: 4px solid var(--accent);
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        
+        .notice-title {
+            color: #e65100;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .notice-title:before {
+            content: "!";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background-color: #e65100;
+            color: white;
+            border-radius: 50%;
+            margin-right: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 14px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background-color: #f8fafd;
+            font-weight: 600;
+            color: #444;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .info-table tr:hover td {
+            background-color: #f8fafd;
+        }
+        
+        .fee-col {
+            width: 130px;
+            text-align: right;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .checkbox-col {
+            width: 80px;
+            text-align: center;
+        }
+        
+        /* Custom checkboxes */
+        .custom-checkbox {
+            position: relative;
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            margin: 0 auto;
+        }
+        
+        .custom-checkbox input {
+            opacity: 0;
+            position: absolute;
+            cursor: pointer;
+        }
+        
+        /* チェックボックス(複数選択)のスタイル */
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 24px;
+            width: 24px;
+            background-color: #eee;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        /* ラジオボタン(単一選択)のスタイル */
+        .radiomark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 24px;
+            width: 24px;
+            background-color: #eee;
+            border: 2px solid #ddd;
+            border-radius: 50%; /* 円形にする */
+            transition: all 0.2s ease;
+        }
+        
+        .custom-checkbox:hover input ~ .checkmark,
+        .custom-checkbox:hover input ~ .radiomark {
+            background-color: #ddd;
+        }
+        
+        .custom-checkbox input:checked ~ .checkmark,
+        .custom-checkbox input:checked ~ .radiomark {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .checkmark:after,
+        .radiomark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+        
+        .custom-checkbox input:checked ~ .checkmark:after,
+        .custom-checkbox input:checked ~ .radiomark:after {
+            display: block;
+        }
+        
+        /* チェックボックスのチェックマーク */
+        .custom-checkbox .checkmark:after {
+            left: 8px;
+            top: 4px;
+            width: 6px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        
+        /* ラジオボタンのマーク(中心の白い円) */
+        .custom-checkbox .radiomark:after {
+            left: 50%;
+            top: 50%;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: white;
+            transform: translate(-50%, -50%);
+        }
+        
+        /* 選択タイプのラベル表示 */
+        .selection-type {
+            display: inline-block;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 5px;
+            font-weight: normal;
+            vertical-align: middle;
+        }
+        
+        .single-selection {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .multiple-selection {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .app-type-row td {
+            padding: 18px 20px;
+        }
+        
+        .app-type-row .app-type-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .app-type-row:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .option-row td {
+            background-color: #fdfdfd;
+            font-size: 15px;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 3px 6px;
+            font-size: 11px;
+            border-radius: 4px;
+            margin-left: 8px;
+            font-weight: normal;
+        }
+        
+        .note-tag {
+            background-color: #f1f8e9;
+            color: #558b2f;
+        }
+        
+        .warning-tag {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .simulation-message {
+            text-align: center;
+            font-size: 18px;
+            margin: 30px 0 20px;
+            color: var(--accent);
+            font-weight: 600;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .simulation-message:before,
+        .simulation-message:after {
+            content: '━━';
+            color: #ddd;
+            margin: 0 10px;
+        }
+        
+        .total-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .total-card {
+            flex: 1;
+            min-width: 260px;
+            padding: 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .total-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .application-total {
+            background-color: var(--primary-light);
+            border-top: 5px solid var(--primary);
+        }
+        
+        .fire-safety-total {
+            background-color: var(--secondary-light);
+            border-top: 5px solid var(--secondary);
+        }
+        
+        .total-icon {
+            font-size: 24px;
+            margin-bottom: 15px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .application-icon {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .fire-safety-icon {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .total-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .total-amount {
+            font-size: 28px;
+            font-weight: 700;
+            position: relative;
+        }
+        
+        .application-amount {
+            color: var(--primary);
+        }
+        
+        .fire-safety-amount {
+            color: var(--secondary);
+        }
+        
+        .service-feature {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+        }
+        
+        .feature-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .feature-icon.check {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .feature-icon.cross {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        /* サービス内容の比較テーブルのスタイル向上 */
+        .service-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .service-table th {
+            background-color: #f8fafd;
+            font-weight: 600;
+            text-align: center;
+            padding: 16px 10px;
+        }
+        
+        .service-table th:first-child {
+            text-align: left;
+            width: 40%;
+        }
+        
+        .service-table td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 14px 10px;
+            position: relative;
+        }
+        
+        .service-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+        
+        .service-table tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        .service-table tr:hover td {
+            background-color: #f5f9ff;
+        }
+        
+        .service-check {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+        
+        .service-note {
+            display: block;
+            font-size: 12px;
+            color: #777;
+            margin-top: 4px;
+        }
+        
+        .tab-container {
+            margin-bottom: 25px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 14px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            color: #777;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .cta-button {
+            display: block;
+            width: 100%;
+            max-width: 380px;
+            margin: 40px auto 0;
+            padding: 16px 24px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);
+        }
+        
+        .cta-button:hover {
+            background-color: #f57c00;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(255, 152, 0, 0.4);
+        }
+        
+        /* レスポンシブデザイン */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .card-header {
+                padding: 15px 18px;
+                font-size: 16px;
+            }
+            
+            .card-body {
+                padding: 15px 18px;
+            }
+            
+            th, td {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+            
+            .fee-col {
+                width: 100px;
+            }
+            
+            .checkbox-col {
+                width: 60px;
+            }
+            
+            /* 固定ヘッダーのレスポンシブ対応 */
+            .fixed-cost-container {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .fixed-cost-header {
+                padding: 5px 0;
+            }
+            
+            .fixed-cost-item {
+                width: 100%;
+            }
+            
+            .fixed-cost-label {
+                font-size: 10px;
+            }
+            
+            .fixed-cost-value {
+                font-size: 14px;
+            }
+            
+            .fixed-cost-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
+            
+            body {
+                padding-bottom: 120px; /* モバイル用に余白を調整 */
+                padding-top: 0;
+            }
+            
+            .service-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            .service-table th:first-child {
+                width: auto;
+            }
+            
+            .total-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .total-card {
+                width: 100%;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            .tab {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="fixed-cost-header">
+        <div class="fixed-cost-container">
+            <div class="fixed-cost-item app-cost">
+                <div class="fixed-cost-icon app-icon">申</div>
+                <div class="fixed-cost-details">
+                    <div class="fixed-cost-label">申請 概算 お見積り金額</div>
+                    <div class="fixed-cost-value app-value" id="fixed-application-total">¥200,000</div>
+                </div>
+            </div>
+            <div class="fixed-cost-item fire-cost">
+                <div class="fixed-cost-icon fire-icon">消</div>
+                <div class="fixed-cost-details">
+                    <div class="fixed-cost-label">消防 概算 お見積り金額</div>
+                    <div class="fixed-cost-value fire-value" id="fixed-fire-safety-total">¥0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>民泊申請・消防工事 費用シミュレーション</h1>
+            <p class="subtitle">必要なサービスを選択して概算見積りを作成できます</p>
+        </header>
+        
+        <!-- サービス内容をタブ外に移動 -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-header-icon">i</span>
+                各種申請のサービス内容
+            </div>
+            <div class="card-body">
+                <div class="notice">
+                    <div class="notice-title">お客様によって異なること</div>
+                    <div>物件の、共用の設備または共用廊下などがある場合、条件等により、必要な対応が異なる場合があります。</div>
+                </div>
+                
+                <table class="service-table">
+                    <thead>
+                        <tr>
+                            <th>サービス内容</th>
+                            <th>民泊</th>
+                            <th>旅館業</th>
+                            <th>特区民泊</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>保健所への事前相談・協議</td>
+                            <td><span class="service-check">○</span></td>
+                            <td><span class="service-check">○</span></td>
+                            <td><span class="service-check">○</span></td>
+                        </tr>
+                        <tr>
+                            <td>近隣事業説明</td>
+                            <td><span class="service-check">○</span></td>
+                            <td><span class="service-check">○</span></td>
+                            <td>
+                                <span class="service-check">○</span>
+                                <span class="service-note">※大阪は対応不可</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>申請書及び添付書類作成</td>
+                            <td><span class="service-check">○</span></td>
+                            <td><span class="service-check">○</span></td>
+                            <td><span class="service-check">○</span></td>
+                        </tr>
+                        <tr>
+                            <td>申請書提出</td>
+                            <td>
+                                <span class="service-check">○</span>
+                                <span class="service-note">※オンライン申請</span>
+                            </td>
+                            <td><span class="service-check">○</span></td>
+                            <td><span class="service-check">○</span></td>
+                        </tr>
+                        <tr>
+                            <td>立会検査</td>
+                            <td>含まない</td>
+                            <td><span class="service-check">○</span></td>
+                            <td><span class="service-check">○</span></td>
+                        </tr>
+                        <tr>
+                            <td>標識なし許可証のお渡し</td>
+                            <td>
+                                <span class="service-check">○</span>
+                                <span class="service-note">※標識を郵送</span>
+                            </td>
+                            <td>
+                                <span class="service-check">○</span>
+                                <span class="service-note">※許可証を郵送</span>
+                            </td>
+                            <td>
+                                <span class="service-check">○</span>
+                                <span class="service-note">※許可証を郵送</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="cost">民泊申請</div>
+                <div class="tab" data-tab="fire">消防設備</div>
+            </div>
+            
+            <div class="tab-content active" id="cost-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-header-icon">1</span>
+                        申請種別の選択
+                    </div>
+                    <div class="card-body">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>申請種別</th>
+                                    <th class="fee-col">基本費用(税抜)</th>
+                                    <th class="checkbox-col">選択 <span class="selection-type single-selection">単一選択</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="app-type-row">
+                                    <td class="app-type-name">民泊</td>
+                                    <td class="fee-col">¥160,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="radio" name="app-type" id="minpaku" checked>
+                                            <span class="radiomark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="app-type-row">
+                                    <td class="app-type-name">旅館業</td>
+                                    <td class="fee-col">¥200,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="radio" name="app-type" id="ryokan">
+                                            <span class="radiomark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="app-type-row">
+                                    <td class="app-type-name">特区民泊</td>
+                                    <td class="fee-col">¥200,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="radio" name="app-type" id="tokku">
+                                            <span class="radiomark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-header-icon">2</span>
+                        追加オプションの選択
+                    </div>
+                    <div class="card-body">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>オプション内容</th>
+                                    <th class="fee-col">追加費用(税抜)</th>
+                                    <th class="checkbox-col">選択 <span class="selection-type multiple-selection">複数選択</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="option-row minpaku-option">
+                                    <td>民泊で標識がある場合(1回)</td>
+                                    <td class="fee-col">¥30,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="option1">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row ryokan-option" style="display: none;">
+                                    <td>旅館で標識が2回ある場合</td>
+                                    <td class="fee-col">¥30,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="option2">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row">
+                                    <td>消防署説明への専門知識・個人作成及び提出</td>
+                                    <td class="fee-col">¥30,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="option3" checked>
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row">
+                                    <td>2階建て(ワンフロアでない場合)</td>
+                                    <td class="fee-col">¥10,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="option4" checked>
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="fire-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-header-icon">1</span>
+                        物件情報
+                    </div>
+                    <div class="card-body">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>項目</th>
+                                    <th class="checkbox-col">選択 <span class="selection-type multiple-selection">複数選択</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="app-type-row">
+                                    <td class="app-type-name">2階建て以上の建物</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-option1">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="app-type-row">
+                                    <td class="app-type-name">延床面積100㎡以上</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-option2">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-header-icon">2</span>
+                        必要な消防設備
+                    </div>
+                    <div class="card-body">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>設備名</th>
+                                    <th class="fee-col">費用(税抜)</th>
+                                    <th class="checkbox-col">選択 <span class="selection-type multiple-selection">複数選択</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="fire-equipment-list">
+                                <tr class="option-row">
+                                    <td>自動火災報知設備 (基本工事)</td>
+                                    <td class="fee-col">¥120,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-equipment1">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row">
+                                    <td>追加感知器 (5台セット)</td>
+                                    <td class="fee-col">¥45,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-equipment2">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row">
+                                    <td>消火器 (1台)</td>
+                                    <td class="fee-col">¥8,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-equipment3">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row">
+                                    <td>誘導灯 (1台)</td>
+                                    <td class="fee-col">¥15,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-equipment4">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row">
+                                    <td>非常用照明 (1台)</td>
+                                    <td class="fee-col">¥18,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-equipment5">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row">
+                                    <td>連動型住宅用火災警報器 (1台)</td>
+                                    <td class="fee-col">¥12,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-equipment6">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-header-icon">3</span>
+                        追加工事オプション
+                    </div>
+                    <div class="card-body">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>工事内容</th>
+                                    <th class="fee-col">費用(税抜)</th>
+                                    <th class="checkbox-col">選択 <span class="selection-type multiple-selection">複数選択</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="option-row">
+                                    <td>電気配線工事（基本）</td>
+                                    <td class="fee-col">¥35,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-option3">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row">
+                                    <td>追加配線工事（1箇所）</td>
+                                    <td class="fee-col">¥8,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-option4">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row">
+                                    <td>消防検査立会い</td>
+                                    <td class="fee-col">¥25,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-option5">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr class="option-row">
+                                    <td>消防設備点検（初回）</td>
+                                    <td class="fee-col">¥30,000</td>
+                                    <td class="checkbox-col">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="fire-option6">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="notice">
+                    <div class="notice-title">消防設備について</div>
+                    <div>物件の規模・用途により必要な設備が異なります。正確な見積りには現地調査が必要です。こちらはあくまで概算となります。</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="simulation-message">
+            シミュレーション結果
+        </div>
+        
+        <div class="total-container">
+            <div class="total-card application-total">
+                <div class="total-icon application-icon">申</div>
+                <div class="total-title">申請 概算 お見積り金額</div>
+                <div class="total-amount application-amount" id="application-total">¥200,000</div>
+            </div>
+            
+            <div class="total-card fire-safety-total">
+                <div class="total-icon fire-safety-icon">消</div>
+                <div class="total-title">消防 概算 お見積り金額</div>
+                <div class="total-amount fire-safety-amount" id="fire-safety-total">¥0</div>
+            </div>
+        </div>
+        
+        <button class="cta-button" id="estimate-request">
+            詳細なお見積りを依頼する
+        </button>
+    </div>
+
+    <script>
+        // タブ切り替え機能
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.dataset.tab;
+                    
+                    // 全てのタブとコンテンツからアクティブクラスを削除
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // クリックされたタブとそれに対応するコンテンツにアクティブクラスを追加
+                    this.classList.add('active');
+                    document.getElementById(tabId + '-tab').classList.add('active');
+                });
+            });
+            
+            // 申請種別の選択に応じて表示オプションを変更
+            const minpakuRadio = document.getElementById('minpaku');
+            const ryokanRadio = document.getElementById('ryokan');
+            const tokkuRadio = document.getElementById('tokku');
+            const minpakuOptions = document.querySelectorAll('.minpaku-option');
+            const ryokanOptions = document.querySelectorAll('.ryokan-option');
+            
+            function updateOptionVisibility() {
+                if (minpakuRadio.checked) {
+                    minpakuOptions.forEach(option => option.style.display = 'table-row');
+                    ryokanOptions.forEach(option => option.style.display = 'none');
+                } else if (ryokanRadio.checked) {
+                    minpakuOptions.forEach(option => option.style.display = 'none');
+                    ryokanOptions.forEach(option => option.style.display = 'table-row');
+                } else {
+                    minpakuOptions.forEach(option => option.style.display = 'none');
+                    ryokanOptions.forEach(option => option.style.display = 'none');
+                }
+            }
+            
+            minpakuRadio.addEventListener('change', updateOptionVisibility);
+            ryokanRadio.addEventListener('change', updateOptionVisibility);
+            tokkuRadio.addEventListener('change', updateOptionVisibility);
+            
+            // 初期表示設定
+            updateOptionVisibility();
+            
+            // 料金計算機能
+            const option1Checkbox = document.getElementById('option1');
+            const option2Checkbox = document.getElementById('option2');
+            const option3Checkbox = document.getElementById('option3');
+            const option4Checkbox = document.getElementById('option4');
+            const applicationTotal = document.getElementById('application-total');
+            const fireSafetyTotal = document.getElementById('fire-safety-total');
+            const fixedApplicationTotal = document.getElementById('fixed-application-total');
+            const fixedFireSafetyTotal = document.getElementById('fixed-fire-safety-total');
+            
+            // 消防設備のチェックボックス
+            const fireOption1 = document.getElementById('fire-option1');
+            const fireOption2 = document.getElementById('fire-option2');
+            const fireOption3 = document.getElementById('fire-option3');
+            const fireOption4 = document.getElementById('fire-option4');
+            const fireOption5 = document.getElementById('fire-option5');
+            const fireOption6 = document.getElementById('fire-option6');
+            const fireEquipment1 = document.getElementById('fire-equipment1');
+            const fireEquipment2 = document.getElementById('fire-equipment2');
+            const fireEquipment3 = document.getElementById('fire-equipment3');
+            const fireEquipment4 = document.getElementById('fire-equipment4');
+            const fireEquipment5 = document.getElementById('fire-equipment5');
+            const fireEquipment6 = document.getElementById('fire-equipment6');
+            
+            // 自動推奨機能
+            function updateFireRecommendations() {
+                // 2階建て以上と100㎡以上の場合は自動火災報知設備が必要
+                if (fireOption1.checked && fireOption2.checked) {
+                    fireEquipment1.checked = true;
+                }
+                
+                // 2階建て以上なら誘導灯が必要
+                if (fireOption1.checked) {
+                    fireEquipment4.checked = true;
+                }
+                
+                // 基本的に消火器は必要
+                fireEquipment3.checked = true;
+                
+                calculateFireTotal(); // 自動推奨後に再計算
+            }
+            
+            // 申請費用計算（単一の統合関数）
+            function calculateTotal() {
+                let total = 0;
+                
+                // 基本料金
+                if (minpakuRadio.checked) total += 160000;
+                if (ryokanRadio.checked) total += 200000;
+                if (tokkuRadio.checked) total += 200000;
+                
+                // オプション料金
+                if (option1Checkbox.checked) total += 30000;
+                if (option2Checkbox.checked) total += 30000;
+                if (option3Checkbox.checked) total += 30000;
+                if (option4Checkbox.checked) total += 10000;
+                
+                // 金額表示を一貫した形式で更新（固定表示と通常表示の両方）
+                const formattedTotal = '¥' + total.toLocaleString();
+                applicationTotal.textContent = formattedTotal;
+                fixedApplicationTotal.textContent = formattedTotal;
+            }
+            
+            // 消防設備費用計算（単一の統合関数）
+            function calculateFireTotal() {
+                let total = 0;
+                
+                // 設備費用
+                if (fireEquipment1.checked) total += 120000;
+                if (fireEquipment2.checked) total += 45000;
+                if (fireEquipment3.checked) total += 8000;
+                if (fireEquipment4.checked) total += 15000;
+                if (fireEquipment5.checked) total += 18000;
+                if (fireEquipment6.checked) total += 12000;
+                
+                // 工事オプション
+                if (fireOption3.checked) total += 35000;
+                if (fireOption4.checked) total += 8000;
+                if (fireOption5.checked) total += 25000;
+                if (fireOption6.checked) total += 30000;
+                
+                // 金額表示を一貫した形式で更新（固定表示と通常表示の両方）
+                const formattedTotal = '¥' + total.toLocaleString();
+                fireSafetyTotal.textContent = formattedTotal;
+                fixedFireSafetyTotal.textContent = formattedTotal;
+            }
+            
+            // イベントリスナー - 申請費用
+            minpakuRadio.addEventListener('change', calculateTotal);
+            ryokanRadio.addEventListener('change', calculateTotal);
+            tokkuRadio.addEventListener('change', calculateTotal);
+            option1Checkbox.addEventListener('change', calculateTotal);
+            option2Checkbox.addEventListener('change', calculateTotal);
+            option3Checkbox.addEventListener('change', calculateTotal);
+            option4Checkbox.addEventListener('change', calculateTotal);
+            
+            // イベントリスナー - 消防設備
+            fireOption1.addEventListener('change', updateFireRecommendations);
+            fireOption2.addEventListener('change', updateFireRecommendations);
+            fireOption3.addEventListener('change', calculateFireTotal);
+            fireOption4.addEventListener('change', calculateFireTotal);
+            fireOption5.addEventListener('change', calculateFireTotal);
+            fireOption6.addEventListener('change', calculateFireTotal);
+            fireEquipment1.addEventListener('change', calculateFireTotal);
+            fireEquipment2.addEventListener('change', calculateFireTotal);
+            fireEquipment3.addEventListener('change', calculateFireTotal);
+            fireEquipment4.addEventListener('change', calculateFireTotal);
+            fireEquipment5.addEventListener('change', calculateFireTotal);
+            fireEquipment6.addEventListener('change', calculateFireTotal);
+            
+            // 初期計算して表示を設定
+            calculateTotal();
+            updateFireRecommendations(); // この中でcalculateFireTotal()も呼ばれる
+            
+            // CTAボタンのアニメーション
+            const ctaButton = document.getElementById('estimate-request');
+            ctaButton.addEventListener('click', function() {
+                alert('お見積り依頼フォームへ進みます。実際の実装ではフォームページに遷移します。');
+            });
+
+            // スクロール処理
+            window.addEventListener('scroll', function() {
+                const header = document.querySelector('.fixed-cost-header');
+                if (window.scrollY > 200) {
+                    header.style.transform = 'translateY(0)';
+                } else {
+                    header.style.transform = 'translateY(100%)';
+                }
+            });
+
+            // 初期表示では非表示にしておく
+            document.querySelector('.fixed-cost-header').style.transform = 'translateY(100%)';
+        });
+    </script>
+</body>
